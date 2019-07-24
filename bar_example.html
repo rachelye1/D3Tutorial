@@ -25,42 +25,21 @@ width = +svg.attr("width") - margin.left - margin.right,
 height = +svg.attr("height") - margin.top - margin.bottom,
 g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var myJson = JSON.parse('{"times":["2019-06-01T18:25:43.511Z","2019-06-01T18:30:43.511Z","2019-06-01T18:35:43.511Z"],"throughput_groups":[{"app_name":"WhatsApp","is_local":false,"throughputs":[100,200,150]},{"app_name":"SantaInezApp1","is_local":true,"throughputs":[500,200,750]},{"app_name":"Facebook","is_local":false,"throughputs":[10,200,150]}]}') 
-console.log(myJson);
-
-// array of names of the apps parsed from JSON (not used)
-var appNames = []; 
-for (var i = 0; i < myJson.throughput_groups.length; i++) {
-    appNames.push(myJson.throughput_groups[i].app_name); 
-}
-console.log(appNames); 
-
-// array of avg throughputs parsed from JSON (not used)
-var throughput_avg = []; 
-for (var i = 0; i < myJson.throughput_groups.length; i++) {
-    var loop = myJson.throughput_groups[i].throughputs.length; 
-    var num = 0; 
-    for (var j = 0; j < loop; j++) {
-        num += myJson.throughput_groups[i].throughputs[j]; 
-    }
-    throughput_avg.push(num / loop); 
-}
-
-// specify the x and y variables 
+//creates new ordinal band scale with specified domain and range [0, width] for x 
+//also sets the linear scale for y
 var x = d3.scaleBand()
 	.rangeRound([0, width])
 	.padding(0.1);
-  
+
 var y = d3.scaleLinear()
 	.rangeRound([height, 0]);
   
 d3.tsv("morley.txt").then(function (data) {
-	// binds the x domain to the values of Run
+	// binds the x domain to the app names 
 	// since my values are strings, I found data.map() the most useful
-	// otherwise you can use a form of linear scale 
 	x.domain(data.map(function (d) {return d.Run }));
 	
-	// binds the y domain to the values of throughputs 
+	// binds the y domain to the throughputs 
 	y.domain([0, d3.max(data, function (d) {
 				return Number(d.Speed); 
 			})]);
@@ -87,12 +66,10 @@ d3.tsv("morley.txt").then(function (data) {
 	.enter().append("rect")
 	.attr("class", "bar")
 	
-	//I think this specifies the width of the bar 
+	// Specifies the attributes such as position in the graph and the measurements of the bars too
 	.attr("x", function (d) {
 		return x(d.Run);
 	})
-
-	//Maybe specifies the height of the bar 
 	.attr("y", function (d) {
 		return y(Number(d.Speed));
 	})
@@ -101,5 +78,4 @@ d3.tsv("morley.txt").then(function (data) {
 		return height - y(Number(d.Speed));
 	});
 }); 
-
 </script>
