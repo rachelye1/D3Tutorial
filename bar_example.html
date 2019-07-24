@@ -13,6 +13,7 @@
 <script src="//d3js.org/d3.v5.min.js"></script>
 <script>
 
+//creates the svg element, the graph 
 var svg = d3.select("svg"),
 margin = {
 	top: 20,
@@ -27,12 +28,14 @@ g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.
 var myJson = JSON.parse('{"times":["2019-06-01T18:25:43.511Z","2019-06-01T18:30:43.511Z","2019-06-01T18:35:43.511Z"],"throughput_groups":[{"app_name":"WhatsApp","is_local":false,"throughputs":[100,200,150]},{"app_name":"SantaInezApp1","is_local":true,"throughputs":[500,200,750]},{"app_name":"Facebook","is_local":false,"throughputs":[10,200,150]}]}') 
 console.log(myJson);
 
+// array of names of the apps parsed from JSON (not used)
 var appNames = []; 
 for (var i = 0; i < myJson.throughput_groups.length; i++) {
     appNames.push(myJson.throughput_groups[i].app_name); 
 }
 console.log(appNames); 
-  
+
+// array of avg throughputs parsed from JSON (not used)
 var throughput_avg = []; 
 for (var i = 0; i < myJson.throughput_groups.length; i++) {
     var loop = myJson.throughput_groups[i].throughputs.length; 
@@ -42,7 +45,8 @@ for (var i = 0; i < myJson.throughput_groups.length; i++) {
     }
     throughput_avg.push(num / loop); 
 }
- 
+
+// specify the x and y variables 
 var x = d3.scaleBand()
 	.rangeRound([0, width])
 	.padding(0.1);
@@ -51,19 +55,24 @@ var y = d3.scaleLinear()
 	.rangeRound([height, 0]);
   
 d3.tsv("morley.txt").then(function (data) {
+	// binds the x domain to the values of Run
+	// since my values are strings, I found data.map() the most useful
+	// otherwise you can use a form of linear scale 
 	x.domain(data.map(function (d) {return d.Run }));
-	 
+	
+	// binds the y domain to the values of throughputs 
 	y.domain([0, d3.max(data, function (d) {
 				return Number(d.Speed); 
 			})]);
 
-  //x axis labels 
+  	// labels for the x-axis which are the names of the app 
 	g.append("g")
 	.attr("transform", "translate(0," + height + ")")
 	.call(d3.axisBottom(x).scale(x))
-        
+    
+	// labels for the y axis which are the scaled throughputs
 	g.append("g")
-	.call(d3.axisLeft(y).tickValues(throughput_avg))
+	.call(d3.axisLeft(y).scale(y))
 	.append("text")
 	.attr("fill", "#000")
 	.attr("transform", "rotate(-90)")
@@ -72,13 +81,18 @@ d3.tsv("morley.txt").then(function (data) {
 	.attr("text-anchor", "end")
 	.text("Throughput Averages");
 
+	//draws the rectangles bars 
 	g.selectAll(".bar")
 	.data(data)
 	.enter().append("rect")
 	.attr("class", "bar")
+	
+	//I think this specifies the width of the bar 
 	.attr("x", function (d) {
 		return x(d.Run);
 	})
+
+	//Maybe specifies the height of the bar 
 	.attr("y", function (d) {
 		return y(Number(d.Speed));
 	})
