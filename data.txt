@@ -1,0 +1,7 @@
+Expt	AppName	Throughput
+1	WhatsApp	150
+1	SantaInezApp1	483.3
+1	Facebook	120
+1	KhanAcademy	300
+1	Google	613
+1	Youtube 	715

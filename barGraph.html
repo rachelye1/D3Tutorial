@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<svg width="960" height="500"></svg>
+<style>
+	.bar {
+	  fill: steelblue;
+	}
+
+	.bar:hover {
+	  fill: brown;
+	}
+</style>
+// <script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="//d3js.org/d3.v5.min.js"></script>
+<script>
+
+//creates the svg element, the graph 
+var svg = d3.select("svg"),
+margin = {
+	top: 20,
+	right: 20,
+	bottom: 30,
+	left: 50
+},
+width = +svg.attr("width") - margin.left - margin.right,
+height = +svg.attr("height") - margin.top - margin.bottom,
+g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+//creates new ordinal band scale with specified domain and range [0, width] for x 
+//also sets the linear scale for y
+var x = d3.scaleBand()
+	.rangeRound([0, width])
+	.padding(0.1);
+
+var y = d3.scaleLinear()
+	.rangeRound([height, 0]);
+  
+d3.tsv("data.txt").then(function (data) {
+	// binds the x domain to the app names 
+	// since my values are strings, I found data.map() the most useful
+	x.domain(data.map(function (d) {return d.AppName }));
+	
+	// binds the y domain to the throughputs 
+	y.domain([0, d3.max(data, function (d) {
+				return Number(d.Throughput); 
+			})]);
+
+  	// labels for the x-axis which are the names of the app 
+	g.append("g")
+	.attr("transform", "translate(0," + height + ")")
+	.call(d3.axisBottom(x).scale(x))
+    
+	// labels for the y axis which are the scaled throughputs
+	g.append("g")
+	.call(d3.axisLeft(y).scale(y))
+	.append("text")
+	.attr("fill", "#000")
+	.attr("transform", "rotate(-90)")
+	.attr("y", 6)
+	.attr("dy", "0.71em")
+	.attr("text-anchor", "end")
+	.text("Throughput Averages");
+
+	//draws the rectangles bars 
+	g.selectAll(".bar")
+	.data(data)
+	.enter().append("rect")
+	.attr("class", "bar")
+	
+	// Specifies the attributes such as position in the graph and the measurements of the bars too
+	.attr("x", function (d) {
+		return x(d.AppName);
+	})
+	.attr("y", function (d) {
+		return y(Number(d.Throughput));
+	})
+	.attr("width", x.bandwidth())
+	.attr("height", function (d) {
+		return height - y(Number(d.Throughput));
+	});
+}); 
+</script>
