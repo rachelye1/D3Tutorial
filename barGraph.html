@@ -2,28 +2,40 @@
 <svg width="960" height="500"></svg>
 <style>
 	.bar {
-	  fill: steelblue;
+		fill: rgb(250, 169, 232);
 	}
 
 	.bar:hover {
-	  fill: brown;
+		fill: rgb(184, 57, 141);
+	}
+	.toolTip {
+		position: absolute; 
+		display: none; 
+		min-width: 80px;
+  		height: auto;
+  		background: none repeat scroll 0 0 #ffffff;
+  		border: 1px solid rgb(241, 33, 137);
+  		padding: 14px;
+  		text-align: center;
 	}
 </style>
-// <script src="https://d3js.org/d3.v5.min.js"></script>
-<script src="//d3js.org/d3.v5.min.js"></script>
+<!--<script src="https://d3js.org/d3.v5.min.js"></script> -->
+
+<script src="d3\d3.min.js"></script>
+<!--<div id="my_dataviz"></div>-->
 <script>
 
-//creates the svg element, the graph 
+
 var svg = d3.select("svg"),
 margin = {
 	top: 20,
 	right: 20,
-	bottom: 30,
+	bottom: 50,
 	left: 50
 },
 width = +svg.attr("width") - margin.left - margin.right,
 height = +svg.attr("height") - margin.top - margin.bottom,
-g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")"); 
 
 //creates new ordinal band scale with specified domain and range [0, width] for x 
 //also sets the linear scale for y
@@ -34,48 +46,100 @@ var x = d3.scaleBand()
 var y = d3.scaleLinear()
 	.rangeRound([height, 0]);
   
-d3.tsv("data.txt").then(function (data) {
+d3.tsv("app_throughput_data.tsv").then(function (data) {
 	// binds the x domain to the app names 
 	// since my values are strings, I found data.map() the most useful
-	x.domain(data.map(function (d) {return d.AppName }));
+	x.domain(data.map(function (d) {return d.AppName}));
 	
 	// binds the y domain to the throughputs 
 	y.domain([0, d3.max(data, function (d) {
-				return Number(d.Throughput); 
+				return Number(d.Throughput / 3600); 
 			})]);
 
-  	// labels for the x-axis which are the names of the app 
+  	// labels for the x-axis 
 	g.append("g")
 	.attr("transform", "translate(0," + height + ")")
-	.call(d3.axisBottom(x).scale(x))
+	.call(d3.axisBottom(x).scale(x));
+
+	g.append("text") 
+	.attr("fill", "#000") 
+	.attr("transform", "rotate(0)")
+	.attr("x", width / 2)
+	.attr("y", height + margin.bottom - 5)
+	.attr("dx", "0.7em") 
+	.attr("text-anchor", "middle")
+	.text("Applications"); 
     
-	// labels for the y axis which are the scaled throughputs
+	// labels for the y axis 
 	g.append("g")
-	.call(d3.axisLeft(y).scale(y))
-	.append("text")
+	.call(d3.axisLeft(y).scale(y));
+
+	g.append("text")
 	.attr("fill", "#000")
 	.attr("transform", "rotate(-90)")
 	.attr("y", 6)
 	.attr("dy", "0.71em")
 	.attr("text-anchor", "end")
-	.text("Throughput Averages");
+	.text("Throughput Avg (kilobytes/sec)");
+	
+	var tooltip = d3.select("body").append("div").attr("class", "toolTip");
+	/*var tooltip = d3.select("#my_dataviz")
+	.append("div")
+	.style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "white")
+    .style("border", "solid")
+    .style("border-width", "2px")
+    .style("border-radius", "5px")
+    .style("padding", "5px")
+	console.log("tooltip created");
 
-	//draws the rectangles bars 
+	var mouseover = function(d) {
+    tooltip
+      .style("opacity", 1)
+    d3.select(this)
+      .style("stroke", "black")
+      .style("opacity", 1)
+  	}
+  	var mousemove = function(d) {
+    tooltip
+      .html("Throughput (kb/sec): " + d.Throughput / 3600)
+      .style("left", (d3.mouse(this)[0]+70) + "px")
+      .style("top", (d3.mouse(this)[1]) + "px")
+	  console.log("mouse moved");
+  	}
+  	var mouseleave = function(d) {
+    tooltip
+      .style("opacity", 0)
+    d3.select(this)
+      .style("stroke", "none")
+      .style("opacity", 0.8)
+  	}*/ 
+
 	g.selectAll(".bar")
 	.data(data)
 	.enter().append("rect")
 	.attr("class", "bar")
-	
-	// Specifies the attributes such as position in the graph and the measurements of the bars too
 	.attr("x", function (d) {
 		return x(d.AppName);
 	})
 	.attr("y", function (d) {
-		return y(Number(d.Throughput));
+		return y(Number(d.Throughput / 3600));
 	})
 	.attr("width", x.bandwidth())
 	.attr("height", function (d) {
-		return height - y(Number(d.Throughput));
-	});
+		return height - y(Number(d.Throughput / 3600));
+	})
+	/*.on("mouseover", mouseover)
+	.on("mousemove", mousemove)
+	.on("mouseleave", mouseleave)*/
+	.on("mousemove", function(d) {
+		tooltip		
+			.style("left", d3.event.pageX - 50 + "px") 
+			.style("top", d3.event.pageY - 70 + "px") 
+			.style("display", "inline-block") 
+			.html("Throughput (kb/sec): " + d.Throughput / 3600); 
+	})
+	.on("mouseout", function(d){ tooltip.style("display", "none");}); 	
 }); 
 </script>
